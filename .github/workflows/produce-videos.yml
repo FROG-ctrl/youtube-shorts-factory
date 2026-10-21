@@ -1,0 +1,85 @@
+name: Produce Shorts
+
+on:
+  workflow_dispatch:
+    inputs:
+      lang:
+        description: "Language to produce (empty = all)"
+        required: false
+        default: ""
+      topic:
+        description: "Topic id (empty = all)"
+        required: false
+        default: ""
+      skip_upload:
+        description: "Skip the Google Drive upload"
+        required: false
+        default: "false"
+  schedule:
+    # every day at 12:00 UTC
+    - cron: "0 12 * * *"
+
+concurrency:
+  group: produce-shorts
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  produce:
+    name: Produce videos
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+      PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+      GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-noto-core fonts-noto-extra
+          ffmpeg -version
+
+      - name: Check services
+        run: python run.py --check
+
+      - name: Produce videos
+        run: |
+          ARGS=""
+          if [ -n "${{ inputs.lang }}" ]; then ARGS="$ARGS --lang ${{ inputs.lang }}"; fi
+          if [ -n "${{ inputs.topic }}" ]; then ARGS="$ARGS --topic ${{ inputs.topic }}"; fi
+          if [ "${{ inputs.skip_upload }}" = "true" ]; then ARGS="$ARGS --no-drive"; fi
+          echo "Running: python run.py $ARGS"
+          python run.py $ARGS
+
+      - name: Upload videos as artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shorts-${{ github.run_id }}
+          path: out/
+          retention-days: 7
+          if-no-files-found: ignore

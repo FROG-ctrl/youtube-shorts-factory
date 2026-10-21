@@ -1,0 +1,22 @@
+# outputs
+out/
+output/
+*.mp4
+*.mp3
+*.wav
+*.srt
+*.ass
+
+# secrets
+credentials.json
+service_account.json
+.env
+.env.*
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/

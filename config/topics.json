@@ -1,0 +1,40 @@
+{
+  "channel": {
+    "name": "Shorts Factory",
+    "niche": "technology",
+    "niche_ar": "تكنولوجيا",
+    "audience": "شباب عربي وعالمي مهتمين بالتقنية"
+  },
+  "languages": [
+    {
+      "code": "ar",
+      "name": "Arabic",
+      "tts_voice": "ar-EG-SalmaNeural",
+      "tts_rate": "+8%",
+      "locale": "ar-EG"
+    },
+    {
+      "code": "en",
+      "name": "English",
+      "tts_voice": "en-US-AriaNeural",
+      "tts_rate": "+5%",
+      "locale": "en-US"
+    }
+  ],
+  "daily_topics": [
+    {
+      "id": "ai-tools",
+      "title_ar": "أدوات الذكاء الاصطناعي اللي هتغير شغلك",
+      "title_en": "AI Tools That Will Change How You Work",
+      "keywords": ["artificial intelligence", "technology", "futuristic", "computer", "digital"],
+      "keywords_ar": ["ذكاء اصطناعي", "تكنولوجيا", "مستقبل", "حاسوب", "رقمي"]
+    },
+    {
+      "id": "productivity",
+      "title_ar": "عادات يومية بتوفرلك ساعات",
+      "title_en": "Daily Habits That Save You Hours",
+      "keywords": ["productivity", "workspace", "clock", "morning", "planning"],
+      "keywords_ar": ["إنتاجية", "مكتب", "ساعة", "صباح", "تخطيط"]
+    }
+  ]
+}
