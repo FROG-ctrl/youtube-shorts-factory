@@ -66,6 +66,9 @@ jobs:
       - name: Check services
         run: python run.py --check
 
+      - name: Run tests
+        run: python tests/test_integrations.py
+
       - name: Produce videos
         run: |
           ARGS=""
