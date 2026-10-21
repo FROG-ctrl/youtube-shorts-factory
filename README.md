@@ -98,6 +98,21 @@ gh secret set TELEGRAM_CHAT_ID --body "<your-chat-id>"
 - **يدوياً** من صفحة Actions (مع اختيار اللغة أو الموضوع).
 - بيحفظ الفيديوهات كـ artifacts لو الـ Drive upload فشل.
 
+## ربط n8n
+
+`n8n/shorts-factory-notifications.json` فيه workflow جاهز للاستيراد:
+
+1. في n8n: **Workflows → Import from File** واختار الملف.
+2. اربط credential تيليجرام (اسمه `Telegram account`) بالـ bot token.
+3. فعّل الـ workflow، وخد رابط الـ webhook:
+   `https://<your-n8n-host>/webhook/shorts-factory`
+4. حطه كـ secret:
+   ```bash
+   gh secret set N8N_WEBHOOK_URL --body "https://<your-n8n-host>/webhook/shorts-factory"
+   ```
+
+الـ workflow بيستقبل نتيجة كل تشغيل وبيبعت رسالة تيليجرام للنجاح أو الفشل.
+
 ## المخرجات
 
 ```

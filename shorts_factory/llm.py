@@ -130,6 +130,27 @@ def _clean_sentence(sentence: str) -> str:
     return sentence.strip()
 
 
+def _normalise(text: str) -> str:
+    """Lowercase and drop everything but letters and digits, for comparison."""
+    return re.sub(r"[^\w\u0600-\u06ff]+", "", text.lower())
+
+
+def _dedupe_against_hook(hook: str, sentences: list[str]) -> list[str]:
+    """Drop a body sentence that just repeats the hook."""
+    if not hook:
+        return sentences
+    target = _normalise(hook)
+    if not target:
+        return sentences
+    kept: list[str] = []
+    for sentence in sentences:
+        if _normalise(sentence) == target:
+            log.info("dropping a body sentence that repeats the hook")
+            continue
+        kept.append(sentence)
+    return kept
+
+
 def list_available_models(api_key: str) -> list[str]:
     """Ask the API which models this key can actually use, best first.
 
@@ -260,12 +281,15 @@ def generate_script(
             log.warning("model %s returned no sentences", model)
             continue
 
+        hook = _clean_sentence(str(payload_json.get("hook", "")))
+        sentences = _dedupe_against_hook(hook, sentences)
+
         log.info("script generated with model %s", model)
         global _working_model
         _working_model = model
         return Script(
             title=str(payload_json.get("title", topic_title)).strip(),
-            hook=_clean_sentence(str(payload_json.get("hook", ""))),
+            hook=hook,
             sentences=sentences,
             media_keywords=[
                 str(k).strip() for k in payload_json.get("media_keywords", []) if k
