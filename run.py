@@ -56,10 +56,42 @@ def main() -> int:
         print("pixabay key:", "set" if settings.pixabay_api_key else "MISSING")
         print("drive      :", "ready" if settings.has_drive else "not configured")
         print("telegram   :", "ready" if settings.telegram_bot_token and settings.telegram_chat_id else "not configured")
+        print("n8n hook   :", "set" if settings.n8n_webhook_url else "not configured")
         for name, status in media.provider_status(
             settings.pexels_api_key, settings.pixabay_api_key
         ).items():
             print(f"provider {name:<10}: {status}")
+
+        print("\n=== what is still missing ===")
+        missing = []
+        if not settings.gemini_api_key:
+            missing.append(
+                "GEMINI_API_KEY  -> https://aistudio.google.com/apikey  (blocks everything)"
+            )
+        if not settings.pixabay_api_key and not settings.pexels_api_key:
+            missing.append(
+                "PIXABAY_API_KEY -> https://pixabay.com/api/docs/  (free, best footage quality)"
+            )
+        if not settings.has_drive:
+            missing.append(
+                "GOOGLE_SERVICE_ACCOUNT -> Google Cloud console, create a service account,\n"
+                "                       enable the Drive API, download the JSON and share the\n"
+                "                       target folder with the service account email"
+            )
+        if not (settings.telegram_bot_token and settings.telegram_chat_id):
+            missing.append(
+                "TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID -> create the bot with @BotFather"
+            )
+        if not settings.n8n_webhook_url:
+            missing.append(
+                "N8N_WEBHOOK_URL -> import n8n/shorts-factory-notifications.json, activate it\n"
+                "                   and copy the production webhook url"
+            )
+        if not missing:
+            print("nothing - every service is configured")
+        for item in missing:
+            print(" -", item)
+        print("\nrun: ./scripts/setup_secrets.sh   (sets them all at once)")
         return 0
 
     if not settings.gemini_api_key:

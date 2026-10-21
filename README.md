@@ -63,12 +63,38 @@ GEMINI_API_KEY=... .venv/bin/python run.py
 
 ### إضافة الـ Secrets على GitHub
 
+الطريقة السريعة — سكربت واحد بيسألك على كل حاجة:
+
+```bash
+./scripts/setup_secrets.sh
+```
+
+أو يدوي:
+
 ```bash
 gh secret set GEMINI_API_KEY --body "<your-key>"
 gh secret set PIXABAY_API_KEY --body "<your-key>"
 gh secret set TELEGRAM_BOT_TOKEN --body "<your-token>"
 gh secret set TELEGRAM_CHAT_ID --body "<your-chat-id>"
 ```
+
+### إزاي تجيب كل مفتاح
+
+| الخدمة | الطريقة | ملاحظة |
+|---|---|---|
+| Gemini | https://aistudio.google.com/apikey | بدونه مفيش سكريبت |
+| Pixabay | https://pixabay.com/api/docs/ | مجاني، أفضل لقطات. لو `Pexels` رافع `401` ده بديله |
+| Google Drive | Google Cloud Console → مشروع → تفعيل Drive API → Service Account | **لازم تشارك المجلد مع إيميل الـ service account** وإلا الرفع هيفشل بـ `404` |
+| Telegram | `@BotFather` → `/newbot` | الـ chat id من `@userinfobot` |
+| n8n | استورد الـ workflow من `n8n/` وفعّله | الرابط بيكون `https://host/webhook/shorts-factory` |
+
+لتشخيص الحالة في أي وقت:
+
+```bash
+python run.py --check
+```
+
+بيقولك إيه اللي ناقص وطلبه منين بالظبط.
 
 ## مصدر اللقطات
 

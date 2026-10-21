@@ -90,7 +90,8 @@ class Settings:
 
     @property
     def has_drive(self) -> bool:
-        return bool(self.google_service_account and self.google_drive_folder_id)
+        # The folder is created on demand, so the service account is enough.
+        return bool(self.google_service_account)
 
 
 def load_settings() -> Settings:

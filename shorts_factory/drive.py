@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import logging
-import tempfile
 from pathlib import Path
 
 from google.oauth2 import service_account
@@ -54,17 +53,12 @@ def upload(
     service = _build_service(account_json)
     target_folder = _ensure_folder(service, folder_id, folder_name)
 
-    with tempfile.NamedTemporaryFile(delete=False) as handle:
-        temp_path = Path(handle.name)
-    try:
-        media = MediaFileUpload(str(file_path), mimetype="video/mp4", resumable=True)
-        created = service.files().create(
-            body={"name": file_path.name, "parents": [target_folder]},
-            media_body=media,
-            fields="id, name, webViewLink",
-        ).execute()
-    finally:
-        temp_path.unlink(missing_ok=True)
+    media = MediaFileUpload(str(file_path), mimetype="video/mp4", resumable=True)
+    created = service.files().create(
+        body={"name": file_path.name, "parents": [target_folder]},
+        media_body=media,
+        fields="id, name, webViewLink",
+    ).execute()
 
     link = created.get("webViewLink") or f"https://drive.google.com/file/d/{created.get('id')}"
     log.info("uploaded %s to Drive: %s", file_path.name, link)
