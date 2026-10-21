@@ -40,6 +40,8 @@ MODEL_FALLBACKS = [
 #: HTTP statuses that mean "try again", not "this model will never work".
 RETRYABLE_STATUS = {408, 429, 500, 502, 503, 504}
 MAX_ATTEMPTS = 3
+#: Busy models answer slowly, so a short timeout moves on to the next one fast.
+REQUEST_TIMEOUT = 60
 
 #: Remembers the model that answered last so the next video starts there.
 _working_model: str = ""
@@ -208,7 +210,9 @@ def generate_script(
 
         for attempt in range(1, MAX_ATTEMPTS + 1):
             try:
-                response = requests.post(url, headers=headers, json=payload, timeout=120)
+                response = requests.post(
+                    url, headers=headers, json=payload, timeout=REQUEST_TIMEOUT
+                )
             except requests.RequestException as exc:  # pragma: no cover - network issue
                 last_error = exc
                 log.warning("model %s unreachable: %s", model, exc)
