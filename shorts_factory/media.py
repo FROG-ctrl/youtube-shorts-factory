@@ -407,8 +407,16 @@ def cleanup_raw(dest_dir: Path) -> None:
             shutil.rmtree(path, ignore_errors=True)
 
 
-def provider_status(pexels_api_key: str = "", pixabay_api_key: str = "") -> dict:
-    """Quick health check of every configured provider, used by the CLI."""
+def provider_status(
+    pexels_api_key: str = "",
+    pixabay_api_key: str = "",
+    include_keyed: bool = True,
+) -> dict:
+    """Quick health check of every configured provider, used by the CLI.
+
+    ``include_keyed`` can be turned off when the keyed providers were already
+    probed by :mod:`shorts_factory.health`, so they are not searched twice.
+    """
     status: dict[str, str] = {}
     if pexels_api_key:
         try:
@@ -416,7 +424,7 @@ def provider_status(pexels_api_key: str = "", pixabay_api_key: str = "") -> dict
             status["pexels"] = f"ok ({len(clips)} clips)"
         except Exception as exc:  # noqa: BLE001
             status["pexels"] = f"error: {exc}"
-    else:
+    elif include_keyed:
         status["pexels"] = "no key"
     if pixabay_api_key:
         try:
@@ -424,7 +432,7 @@ def provider_status(pexels_api_key: str = "", pixabay_api_key: str = "") -> dict
             status["pixabay"] = f"ok ({len(clips)} clips)"
         except Exception as exc:  # noqa: BLE001
             status["pixabay"] = f"error: {exc}"
-    else:
+    elif include_keyed:
         status["pixabay"] = "no key"
     try:
         clips = _search_archive("nature", 1)

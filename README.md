@@ -91,20 +91,33 @@ gh secret set TELEGRAM_CHAT_ID --body "<your-chat-id>"
 لتشخيص الحالة في أي وقت:
 
 ```bash
-python run.py --check
+python run.py --check              # بيفحص كل خدمة فعلياً (بيستدعي الـ APIs)
+python run.py --check --offline    # بيفحص الموجود من الـ credentials بس، بدون إنترنت
 ```
 
-بيقولك إيه اللي ناقص وطلبه منين بالظبط.
+بيقولك إيه اللي ناقص وطلبه منين بالظبط، وبيفرق بين **خدمة ناقصة** و**مفتاح موجود بس مرفوض**.
+اللي بيتأكد من الـ API فعلياً:
+
+| الخدمة | إزاي بيتأكد |
+|---|---|
+| Gemini | `models` endpoint، وبيرجع عدد الموديلات المتاحة |
+| Pexels / Pixabay | بحث تجريبي، والـ `401` بيتReport كـ "key rejected" |
+| Google Drive | بياخد folder id وبيتأكد إن الـ service account ليه وصول عليه |
+| Telegram | `getMe` للـ bot + `getChat` للـ chat id |
+| n8n | `POST` تجريبي على الـ webhook |
+
+`python run.py --check --require gemini` بيرجع كود خطأ `1` لو المفتاح مرفوض — مفيد في الـ CI.
 
 ## الاختبارات
 
 ```bash
-python tests/test_integrations.py
+python tests/test_integrations.py   # ربط Drive + تيليجرام + n8n
+python tests/test_health.py          # فحص الـ credentials (بدون إنترنت)
 ```
 
-بتغطي ربط Drive (إنشاء المجلد، إعادة استخدامه، الـ folder id) وتيليجرام والـ webhook
+بيغطي ربط Drive (إنشاء المجلد، إعادة استخدامه، الـ folder id) وتيليجرام والـ webhook
 من غير ما تحتاج credentials حقيقية، عشان أول ما تحط الـ secrets تشتغل من أول مرة.
-الـ workflow بيشغّلها أوتوماتيك قبل الإنتاج.
+الـ workflow بيشغّلهم أوتوماتيك قبل الإنتاج.
 
 ## مصدر اللقطات
 

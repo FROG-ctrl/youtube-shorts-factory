@@ -17,7 +17,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from shorts_factory import media, telegram
+from shorts_factory import health, media, telegram
 from shorts_factory.config import load_settings
 from shorts_factory.pipeline import produce_video
 
@@ -33,6 +33,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--lang", choices=["ar", "en"], help="produce a single language")
     parser.add_argument("--topic", help="topic id from config/topics.json")
     parser.add_argument("--check", action="store_true", help="check service availability and exit")
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="with --check, only report which credentials are present (no network calls)",
+    )
+    parser.add_argument(
+        "--require",
+        default="",
+        help="comma separated services that must be valid, e.g. gemini (exits 1 otherwise)",
+    )
     parser.add_argument("--output", default="", help="output directory")
     parser.add_argument("--no-drive", action="store_true", help="skip the Drive upload")
     parser.add_argument("--no-telegram", action="store_true", help="skip Telegram notifications")
@@ -50,17 +60,29 @@ def main() -> int:
         settings.enable_telegram = False
 
     if args.check:
+        checks: list[health.ServiceCheck] = []
         print("\n=== service check ===")
-        print("gemini key :", "set" if settings.gemini_api_key else "MISSING")
-        print("pexels key :", "set" if settings.pexels_api_key else "MISSING")
-        print("pixabay key:", "set" if settings.pixabay_api_key else "MISSING")
-        print("drive      :", "ready" if settings.has_drive else "not configured")
-        print("telegram   :", "ready" if settings.telegram_bot_token and settings.telegram_chat_id else "not configured")
-        print("n8n hook   :", "set" if settings.n8n_webhook_url else "not configured")
+        if args.offline:
+            print("gemini key :", "set" if settings.gemini_api_key else "MISSING")
+            print("pexels key :", "set" if settings.pexels_api_key else "MISSING")
+            print("pixabay key:", "set" if settings.pixabay_api_key else "MISSING")
+            print("drive      :", "ready" if settings.has_drive else "not configured")
+            print("telegram   :", "ready" if settings.telegram_bot_token and settings.telegram_chat_id else "not configured")
+            print("n8n hook   :", "set" if settings.n8n_webhook_url else "not configured")
+        else:
+            checks = health.check_all(settings)
+            for check in checks:
+                print(" ", check.render())
+
         for name, status in media.provider_status(
-            settings.pexels_api_key, settings.pixabay_api_key
+            settings.pexels_api_key if args.offline else "",
+            settings.pixabay_api_key if args.offline else "",
+            include_keyed=args.offline,
         ).items():
             print(f"provider {name:<10}: {status}")
+
+        by_name = {check.name: check for check in checks}
+        broken = [check for check in checks if check.state == health.BAD]
 
         print("\n=== what is still missing ===")
         missing = []
@@ -91,7 +113,24 @@ def main() -> int:
             print("nothing - every service is configured")
         for item in missing:
             print(" -", item)
+
+        for check in broken:
+            print(f" ! {check.name} is configured but rejected: {check.detail}")
+            if check.name == "drive":
+                print("   share the target folder with the service account email")
+            if check.name == "telegram":
+                print("   check the bot token and the chat id (@userinfobot)")
         print("\nrun: ./scripts/setup_secrets.sh   (sets them all at once)")
+
+        required = [name.strip() for name in args.require.split(",") if name.strip()]
+        failed = [
+            name
+            for name in required
+            if name in by_name and by_name[name].state in {health.BAD, health.MISSING}
+        ]
+        if failed:
+            print(f"\nrequired services are not usable: {', '.join(failed)}")
+            return 1
         return 0
 
     if not settings.gemini_api_key:

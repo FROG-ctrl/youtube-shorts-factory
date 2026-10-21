@@ -64,10 +64,12 @@ jobs:
           ffmpeg -version
 
       - name: Check services
-        run: python run.py --check
+        run: python run.py --check --require gemini
 
       - name: Run tests
-        run: python tests/test_integrations.py
+        run: |
+          python tests/test_integrations.py
+          python tests/test_health.py
 
       - name: Produce videos
         run: |
